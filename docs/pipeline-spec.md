@@ -29,10 +29,10 @@ Input: distinct drug name strings from FAERS, labels and recalls. Output: `silve
 
 Order of resolution:
 
-1. FAERS active-ingredient column (`prod_ai`), matched to RxNorm ingredient names.
-2. Exact match on the normalized string (upper case, punctuation and extra spaces removed).
-3. Match after stripping dose, unit and form words.
-4. Override file checked into the repository.
+1. Override file checked into the repository (always wins).
+2. FAERS active-ingredient column (`prod_ai`), matched to RxNorm ingredient names.
+3. Exact match on the normalized string (upper case, punctuation and extra spaces removed).
+4. Match after stripping dose, unit and form words.
 
 Combination products map to each ingredient. New strings are resolved on each run; resolved strings are never recomputed. Unmatched strings are kept with a null `rxcui`.
 

@@ -128,12 +128,15 @@
       "id": "F6",
       "epic": "E0",
       "owner": "Both",
-      "deps": [],
+      "deps": [
+        "F1",
+        "F7"
+      ],
       "title": "Define the formulary",
-      "detail": "About 150 ingredients in five classes (SGLT2 and DPP-4 diabetes drugs, fluoroquinolones, sleep drugs, gabapentinoids, asthma and allergy) plus common hospital drugs. CSV: rxcui, ingredient, class, reason included.",
+      "detail": "About 150 ingredients in five classes (SGLT2 and DPP-4 diabetes drugs, fluoroquinolones, sleep drugs, gabapentinoids, asthma and allergy) plus common hospital drugs. CSV: rxcui, ingredient, class, reason included. Also load the CSV into bronze.formulary.",
       "done": "data/reference/formulary.csv reviewed by both; every row has a valid rxcui.",
       "branch": "chore/F6-formulary",
-      "owns": "data/reference/formulary.csv"
+      "owns": "data/reference/formulary.csv, pipeline/src/**/medsignal/bronze/reference/formulary/"
     },
     {
       "id": "F7",
@@ -171,7 +174,7 @@
         "I1"
       ],
       "title": "FAERS bronze tables",
-      "detail": "Case classes and parsers for DEMO, DRUG, REAC, OUTC and INDI. Bronze Delta tables partitioned by quarter. Every line is loaded or written to rejects with file, line number and reason.",
+      "detail": "Case classes and parsers for DEMO, DRUG, REAC, OUTC and INDI, plus the deleted-case lists (bronze.faers_deleted). Bronze Delta tables partitioned by quarter. Every line is loaded or written to rejects with file, line number and reason.",
       "done": "Lines in = rows loaded + rows rejected for every file (criterion 1).",
       "branch": "feat/I2-faers-bronze",
       "owns": "pipeline/src/**/medsignal/bronze/faers/"
@@ -181,20 +184,22 @@
       "epic": "E1",
       "owner": "A",
       "deps": [
-        "F7"
+        "F7",
+        "F6"
       ],
       "title": "RxNorm and RxClass bronze",
-      "detail": "Load RxNorm names (pipe-delimited RXNCONSO, prescribable subset) with TableParser. Pull class membership from RxClass for formulary ingredients.",
+      "detail": "Load RxNorm names (pipe-delimited RXNCONSO, prescribable subset) with TableParser. Pull class membership from RxClass for formulary ingredients. Also write bronze.rxnorm_ingredient_map (brand, salt and product concepts to ingredient). Also write gold.Drug (name, class, on-formulary flag).",
       "done": "bronze.rxnorm_names and bronze.rxclass populated; counts recorded.",
       "branch": "feat/I3-rxnorm-bronze",
-      "owns": "pipeline/src/**/medsignal/bronze/rxnorm/"
+      "owns": "pipeline/src/**/medsignal/bronze/rxnorm/, pipeline/src/**/medsignal/gold/drug/"
     },
     {
       "id": "I4",
       "epic": "E1",
       "owner": "B",
       "deps": [
-        "F6"
+        "F6",
+        "F1"
       ],
       "title": "DailyMed downloader",
       "detail": "For each formulary ingredient, list SPL setIds and fetch every available version (history) as XML. Record setId, version and checksum in the manifest.",
@@ -248,20 +253,23 @@
       "epic": "E1",
       "owner": "Both",
       "deps": [
-        "F6"
+        "F6",
+        "F1",
+        "F7"
       ],
       "title": "FDA warning answer key",
-      "detail": "Curate about 20 Drug Safety Communications and label changes for formulary drugs: drug or class, reaction terms, date, source URL. Each row checked by the second engineer.",
+      "detail": "Curate about 20 Drug Safety Communications and label changes for formulary drugs: drug or class, reaction terms, date, source URL. Each row checked by the second engineer. Also load the CSV into bronze.fda_warning.",
       "done": "data/reference/fda_warnings.csv with a source link on every row.",
       "branch": "chore/I8-fda-warning-key",
-      "owns": "data/reference/fda_warnings.csv"
+      "owns": "data/reference/fda_warnings.csv, pipeline/src/**/medsignal/bronze/reference/warnings/"
     },
     {
       "id": "I9",
       "epic": "E1",
       "owner": "B",
       "deps": [
-        "F7"
+        "F7",
+        "F6"
       ],
       "title": "ClinicalTrials.gov adverse events",
       "detail": "Pull trial results with reported adverse events for formulary drugs from the v2 API into bronze.",
@@ -304,7 +312,7 @@
         "I3"
       ],
       "title": "Drug identity resolver (drug_xref)",
-      "detail": "Resolve distinct name strings to an ingredient rxcui: prod_ai column, exact normalized match, match after stripping dose and form, override file. Store method and confidence. Incremental: only new strings are resolved. Combination products map to each ingredient.",
+      "detail": "Resolve distinct name strings to an ingredient rxcui: override file, prod_ai column, exact normalized match, match after stripping dose and form. Store method and confidence. Incremental: only new strings are resolved. Combination products map to each ingredient.",
       "done": "At least 95% of formulary-drug mentions resolved (criterion 2); unmatched strings listed by frequency.",
       "branch": "feat/S2-drug-xref",
       "owns": "pipeline/src/**/medsignal/identity/, data/reference/drug_overrides.csv"
@@ -329,13 +337,14 @@
       "owner": "B",
       "deps": [
         "I6",
-        "S2"
+        "S2",
+        "F6"
       ],
       "title": "Label versions and reference label",
-      "detail": "silver.label_version: one row per setId and version with rxcui and effective date. Reference-label rule: brand-name label where one exists, otherwise the most recent single-ingredient label.",
+      "detail": "silver.label_version: one row per setId and version with rxcui and effective date. Reference-label rule: brand-name label where one exists, otherwise the most recent single-ingredient label. Also write gold.Label.",
       "done": "Every formulary ingredient has exactly one current reference label or is listed as missing.",
       "branch": "feat/S4-label-versions",
-      "owns": "pipeline/src/**/medsignal/silver/labels/"
+      "owns": "pipeline/src/**/medsignal/silver/labels/, pipeline/src/**/medsignal/gold/label/"
     },
     {
       "id": "S5",
@@ -343,13 +352,14 @@
       "owner": "B",
       "deps": [
         "I7",
-        "S2"
+        "S2",
+        "F6"
       ],
       "title": "Recall silver table",
-      "detail": "Normalized recall records; product text resolved through drug_xref; unresolved recalls kept with a null rxcui.",
+      "detail": "Normalized recall records; product text resolved through drug_xref; unresolved recalls kept with a null rxcui. Also write gold.Recall.",
       "done": "Resolution rate reported; unresolved recalls visible.",
       "branch": "feat/S5-recall-silver",
-      "owns": "pipeline/src/**/medsignal/silver/recalls/"
+      "owns": "pipeline/src/**/medsignal/silver/recalls/, pipeline/src/**/medsignal/gold/recall/"
     },
     {
       "id": "S6",
@@ -373,7 +383,8 @@
       "epic": "E3",
       "owner": "A",
       "deps": [
-        "S3"
+        "S3",
+        "F6"
       ],
       "title": "AdverseEventStat counts",
       "detail": "Distinct case counts per rxcui, reaction term and quarter, with serious and death counts and cumulative totals by window function. Background totals over all of FAERS.",
@@ -557,7 +568,7 @@
       "detail": "Labels: only new setId and version pairs are parsed and extracted. Recalls: records after the watermark plus all open recalls, merged by recall_number.",
       "done": "A new label version triggers extraction for that version only; a status change on a recall is captured.",
       "branch": "feat/C3-label-recall-incremental",
-      "owns": "pipeline/src/**/medsignal/incremental/labels/, pipeline/src/**/medsignal/incremental/recalls/"
+      "owns": "pipeline/src/**/medsignal/incremental/labels/, pipeline/src/**/medsignal/incremental/recalls/, scripts/run-labels.sh"
     },
     {
       "id": "C4",
@@ -685,7 +696,9 @@
       "epic": "E7",
       "owner": "A",
       "deps": [
-        "G3"
+        "G3",
+        "L5",
+        "S4"
       ],
       "title": "As-of-quarter signal rebuild",
       "detail": "Rebuild signals for each quarter using only FAERS partitions and label versions available at that time.",
@@ -706,14 +719,17 @@
       "detail": "For each known FDA warning, the first quarter MedSignal flagged it as an unlabeled signal; share flagged before the FDA and median lead time.",
       "done": "Backtest table and page; criterion 10 measured.",
       "branch": "feat/V2-backtest-scoring",
-      "owns": "pipeline/src/**/medsignal/backtest/scoring/"
+      "owns": "pipeline/src/**/medsignal/backtest/scoring/, pipeline/src/**/medsignal/publish/backtest/, app/src/**/medsignal/api/backtest/, app/src/main/resources/web/backtest.html"
     },
     {
       "id": "V3",
       "epic": "E7",
       "owner": "A",
       "deps": [
-        "G3"
+        "G3",
+        "L5",
+        "V1",
+        "I8"
       ],
       "title": "Class-effect signals",
       "detail": "The same unlabeled reaction across several drugs of one class, with pooled counts.",
@@ -727,7 +743,8 @@
       "owner": "A",
       "deps": [
         "S3",
-        "G2"
+        "G2",
+        "G1"
       ],
       "title": "Drug-pair interaction signals",
       "detail": "Pair counts from a self-join of case_drug restricted to formulary drugs, with minimum counts. Interaction ratio = pair PRR over the higher single-drug PRR. GraphFrames motif version for comparison.",
@@ -790,7 +807,7 @@
       "detail": "Reports per 100,000 Part D claims beside each signal.",
       "done": "Signals page can sort by reporting rate.",
       "branch": "enhc/V8-exposure-weighting",
-      "owns": "pipeline/src/**/medsignal/advanced/exposure/"
+      "owns": "pipeline/src/**/medsignal/advanced/exposure/, pipeline/src/**/medsignal/publish/exposure/, app/src/**/medsignal/api/exposure/"
     },
     {
       "id": "D1",

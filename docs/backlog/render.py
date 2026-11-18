@@ -23,7 +23,7 @@ for e in data["epics"]:
     md += [f"## {e['id']} {e['name']} (phase {e['phase']})", "", e["goal"], "",
            "| ID | Task | Owner | Depends on | Branch | Owns | Done when |", "|---|---|---|---|---|---|---|"]
     for t in by_epic[e["id"]]:
-        md.append(f"| {t['id']} | **{t['title']}.** {t['detail']} | {t['owner']} | {', '.join(t['deps']) or '-'} | `{t['branch']}` | {t['owns']} | {t['done']} |")
+        md.append(f"| [{t['id']}](../tasks/{t['id']}.md) | **{t['title']}.** {t['detail']} | {t['owner']} | {', '.join(t['deps']) or '-'} | `{t['branch']}` | {t['owns']} | {t['done']} |")
     md.append("")
 (here / "backlog.md").write_text("\n".join(md), encoding="utf-8")
 

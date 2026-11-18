@@ -24,11 +24,11 @@ F5 Spike: XmlDoc on SPL labels,E0 Foundation,"Extract sections (LOINC code, titl
 Done when: Decision record docs/decisions/F5-xmldoc-on-spl.md with the case classes that worked and the fallback used for mixed content.
 
 Depends on: F1",B,F1,0,to do,feat/F5-xmldoc-spike,"labels/src/**/medsignal/spike/, docs/decisions/F5-xmldoc-on-spl.md"
-F6 Define the formulary,E0 Foundation,"About 150 ingredients in five classes (SGLT2 and DPP-4 diabetes drugs, fluoroquinolones, sleep drugs, gabapentinoids, asthma and allergy) plus common hospital drugs. CSV: rxcui, ingredient, class, reason included.
+F6 Define the formulary,E0 Foundation,"About 150 ingredients in five classes (SGLT2 and DPP-4 diabetes drugs, fluoroquinolones, sleep drugs, gabapentinoids, asthma and allergy) plus common hospital drugs. CSV: rxcui, ingredient, class, reason included. Also load the CSV into bronze.formulary.
 
 Done when: data/reference/formulary.csv reviewed by both; every row has a valid rxcui.
 
-Depends on: nothing",Both,,0,to do,chore/F6-formulary,data/reference/formulary.csv
+Depends on: F1, F7",Both,"F1, F7",0,to do,chore/F6-formulary,"data/reference/formulary.csv, pipeline/src/**/medsignal/bronze/reference/formulary/"
 F7 Common pipeline library,E0 Foundation,"Delta read/write helpers, run_manifest (watermarks, checksums), run_metrics writer, Reject type and rejects table, SparkSession factory for tests.
 
 Done when: Unit tests cover manifest and metrics round trips.
@@ -39,21 +39,21 @@ I1 FAERS downloader,E1 Ingestion (bronze),"Download quarterly ASCII zips from 20
 Done when: All quarters on disk; re-running downloads nothing.
 
 Depends on: F3",A,F3,1,to do,feat/I1-faers-downloader,pipeline/src/**/medsignal/download/faers/
-I2 FAERS bronze tables,E1 Ingestion (bronze),"Case classes and parsers for DEMO, DRUG, REAC, OUTC and INDI. Bronze Delta tables partitioned by quarter. Every line is loaded or written to rejects with file, line number and reason.
+I2 FAERS bronze tables,E1 Ingestion (bronze),"Case classes and parsers for DEMO, DRUG, REAC, OUTC and INDI, plus the deleted-case lists (bronze.faers_deleted). Bronze Delta tables partitioned by quarter. Every line is loaded or written to rejects with file, line number and reason.
 
 Done when: Lines in = rows loaded + rows rejected for every file (criterion 1).
 
 Depends on: F4, F7, I1",A,"F4, F7, I1",1,to do,feat/I2-faers-bronze,pipeline/src/**/medsignal/bronze/faers/
-I3 RxNorm and RxClass bronze,E1 Ingestion (bronze),"Load RxNorm names (pipe-delimited RXNCONSO, prescribable subset) with TableParser. Pull class membership from RxClass for formulary ingredients.
+I3 RxNorm and RxClass bronze,E1 Ingestion (bronze),"Load RxNorm names (pipe-delimited RXNCONSO, prescribable subset) with TableParser. Pull class membership from RxClass for formulary ingredients. Also write bronze.rxnorm_ingredient_map (brand, salt and product concepts to ingredient). Also write gold.Drug (name, class, on-formulary flag).
 
 Done when: bronze.rxnorm_names and bronze.rxclass populated; counts recorded.
 
-Depends on: F7",A,F7,1,to do,feat/I3-rxnorm-bronze,pipeline/src/**/medsignal/bronze/rxnorm/
+Depends on: F7, F6",A,"F7, F6",1,to do,feat/I3-rxnorm-bronze,"pipeline/src/**/medsignal/bronze/rxnorm/, pipeline/src/**/medsignal/gold/drug/"
 I4 DailyMed downloader,E1 Ingestion (bronze),"For each formulary ingredient, list SPL setIds and fetch every available version (history) as XML. Record setId, version and checksum in the manifest.
 
 Done when: Label versions on disk for every formulary drug; count reported.
 
-Depends on: F6",B,F6,1,to do,feat/I4-dailymed-downloader,labels/src/**/medsignal/download/
+Depends on: F6, F1",B,"F6, F1",1,to do,feat/I4-dailymed-downloader,labels/src/**/medsignal/download/
 I5 labels module: SPL to JSON Lines,E1 Ingestion (bronze),"XmlDoc extraction of label metadata and the four sections (boxed warning, warnings and precautions, adverse reactions, drug interactions) into LabelSection records. Write JSON Lines and the SparkSchema.ddl string. Extraction failures are written to a rejects file.
 
 Done when: Every downloaded label yields records or a reject; schema string checked in.
@@ -69,16 +69,16 @@ I7 Recall ingestion,E1 Ingestion (bronze),"Download openFDA drug enforcement rec
 Done when: Record count matches the openFDA total for the date range.
 
 Depends on: F7",B,F7,1,to do,feat/I7-recall-ingestion,pipeline/src/**/medsignal/bronze/recalls/
-I8 FDA warning answer key,E1 Ingestion (bronze),"Curate about 20 Drug Safety Communications and label changes for formulary drugs: drug or class, reaction terms, date, source URL. Each row checked by the second engineer.
+I8 FDA warning answer key,E1 Ingestion (bronze),"Curate about 20 Drug Safety Communications and label changes for formulary drugs: drug or class, reaction terms, date, source URL. Each row checked by the second engineer. Also load the CSV into bronze.fda_warning.
 
 Done when: data/reference/fda_warnings.csv with a source link on every row.
 
-Depends on: F6",Both,F6,1,to do,chore/I8-fda-warning-key,data/reference/fda_warnings.csv
+Depends on: F6, F1, F7",Both,"F6, F1, F7",1,to do,chore/I8-fda-warning-key,"data/reference/fda_warnings.csv, pipeline/src/**/medsignal/bronze/reference/warnings/"
 I9 ClinicalTrials.gov adverse events,E1 Ingestion (bronze),"Pull trial results with reported adverse events for formulary drugs from the v2 API into bronze.
 
 Done when: bronze.trial_adverse_event populated for formulary drugs.
 
-Depends on: F7",B,F7,1,to do,feat/I9-trials-bronze,pipeline/src/**/medsignal/bronze/trials/
+Depends on: F7, F6",B,"F7, F6",1,to do,feat/I9-trials-bronze,pipeline/src/**/medsignal/bronze/trials/
 I10 Medicare Part D spending by drug,E1 Ingestion (bronze),"Load the yearly CSV (claims and beneficiaries by drug) with TableParser into bronze.
 
 Done when: bronze.partd_drug populated; years recorded.
@@ -89,7 +89,7 @@ S1 Case deduplication,E2 Cleaning and identity (silver),"silver.case keeps the h
 Done when: One row per caseid; duplicate and deleted counts recorded.
 
 Depends on: I2",A,I2,2,to do,feat/S1-case-dedup,pipeline/src/**/medsignal/silver/cases/
-S2 Drug identity resolver (drug_xref),E2 Cleaning and identity (silver),"Resolve distinct name strings to an ingredient rxcui: prod_ai column, exact normalized match, match after stripping dose and form, override file. Store method and confidence. Incremental: only new strings are resolved. Combination products map to each ingredient.
+S2 Drug identity resolver (drug_xref),E2 Cleaning and identity (silver),"Resolve distinct name strings to an ingredient rxcui: override file, prod_ai column, exact normalized match, match after stripping dose and form. Store method and confidence. Incremental: only new strings are resolved. Combination products map to each ingredient.
 
 Done when: At least 95% of formulary-drug mentions resolved (criterion 2); unmatched strings listed by frequency.
 
@@ -99,16 +99,16 @@ S3 Case detail tables,E2 Cleaning and identity (silver),"silver.case_drug (suspe
 Done when: Primary keys unique; row counts recorded.
 
 Depends on: S1, S2",A,"S1, S2",2,to do,feat/S3-case-detail,pipeline/src/**/medsignal/silver/casedetail/
-S4 Label versions and reference label,E2 Cleaning and identity (silver),"silver.label_version: one row per setId and version with rxcui and effective date. Reference-label rule: brand-name label where one exists, otherwise the most recent single-ingredient label.
+S4 Label versions and reference label,E2 Cleaning and identity (silver),"silver.label_version: one row per setId and version with rxcui and effective date. Reference-label rule: brand-name label where one exists, otherwise the most recent single-ingredient label. Also write gold.Label.
 
 Done when: Every formulary ingredient has exactly one current reference label or is listed as missing.
 
-Depends on: I6, S2",B,"I6, S2",2,to do,feat/S4-label-versions,pipeline/src/**/medsignal/silver/labels/
-S5 Recall silver table,E2 Cleaning and identity (silver),"Normalized recall records; product text resolved through drug_xref; unresolved recalls kept with a null rxcui.
+Depends on: I6, S2, F6",B,"I6, S2, F6",2,to do,feat/S4-label-versions,"pipeline/src/**/medsignal/silver/labels/, pipeline/src/**/medsignal/gold/label/"
+S5 Recall silver table,E2 Cleaning and identity (silver),"Normalized recall records; product text resolved through drug_xref; unresolved recalls kept with a null rxcui. Also write gold.Recall.
 
 Done when: Resolution rate reported; unresolved recalls visible.
 
-Depends on: I7, S2",B,"I7, S2",2,to do,feat/S5-recall-silver,pipeline/src/**/medsignal/silver/recalls/
+Depends on: I7, S2, F6",B,"I7, S2, F6",2,to do,feat/S5-recall-silver,"pipeline/src/**/medsignal/silver/recalls/, pipeline/src/**/medsignal/gold/recall/"
 S6 Data issues log,E2 Cleaning and identity (silver),"For each issue in docs/data-issues.md, measure its size in the real data and record the handling or the decision to leave it.
 
 Done when: Every issue has a number beside it.
@@ -118,7 +118,7 @@ G1 AdverseEventStat counts,E3 Signal statistics,"Distinct case counts per rxcui,
 
 Done when: Totals reconcile with silver.case counts.
 
-Depends on: S3",A,S3,3,to do,feat/G1-event-stat-counts,pipeline/src/**/medsignal/signals/counts/
+Depends on: S3, F6",A,"S3, F6",3,to do,feat/G1-event-stat-counts,pipeline/src/**/medsignal/signals/counts/
 G2 Statistics library,E3 Signal statistics,"Pure functions: PRR, chi-square, reporting odds ratio with 95% interval, information component (shrinkage). Property tests and worked examples.
 
 Done when: Specs pass, including zero-cell and small-count cases.
@@ -183,7 +183,7 @@ C3 Label and recall incremental runs,"E5 Incremental runs, changes, monitoring",
 
 Done when: A new label version triggers extraction for that version only; a status change on a recall is captured.
 
-Depends on: S4, S5, L5, C1",B,"S4, S5, L5, C1",4,to do,feat/C3-label-recall-incremental,"pipeline/src/**/medsignal/incremental/labels/, pipeline/src/**/medsignal/incremental/recalls/"
+Depends on: S4, S5, L5, C1",B,"S4, S5, L5, C1",4,to do,feat/C3-label-recall-incremental,"pipeline/src/**/medsignal/incremental/labels/, pipeline/src/**/medsignal/incremental/recalls/, scripts/run-labels.sh"
 C4 ChangeEvent builder,"E5 Incremental runs, changes, monitoring","Compare Signal, Label and Recall with the previous run and append events: new signal, signal now labeled, label updated, recall opened, recall closed.
 
 Done when: A replayed day with a known new recall and label update yields exactly those events (criterion 7).
@@ -233,22 +233,22 @@ V1 As-of-quarter signal rebuild,E7 Evaluation and advanced analysis,"Rebuild sig
 
 Done when: Signal history table: one row per rxcui, term and as-of quarter.
 
-Depends on: G3",A,G3,6,to do,feat/V1-asof-signals,pipeline/src/**/medsignal/backtest/asof/
+Depends on: G3, L5, S4",A,"G3, L5, S4",6,to do,feat/V1-asof-signals,pipeline/src/**/medsignal/backtest/asof/
 V2 Backtest scoring,E7 Evaluation and advanced analysis,"For each known FDA warning, the first quarter MedSignal flagged it as an unlabeled signal; share flagged before the FDA and median lead time.
 
 Done when: Backtest table and page; criterion 10 measured.
 
-Depends on: V1, I8, L5",A,"V1, I8, L5",6,to do,feat/V2-backtest-scoring,pipeline/src/**/medsignal/backtest/scoring/
+Depends on: V1, I8, L5",A,"V1, I8, L5",6,to do,feat/V2-backtest-scoring,"pipeline/src/**/medsignal/backtest/scoring/, pipeline/src/**/medsignal/publish/backtest/, app/src/**/medsignal/api/backtest/, app/src/main/resources/web/backtest.html"
 V3 Class-effect signals,E7 Evaluation and advanced analysis,"The same unlabeled reaction across several drugs of one class, with pooled counts.
 
 Done when: Known class warnings (for example SGLT2 inhibitors and Fournier's gangrene) appear.
 
-Depends on: G3",A,G3,6,to do,feat/V3-class-effects,pipeline/src/**/medsignal/advanced/classeffect/
+Depends on: G3, L5, V1, I8",A,"G3, L5, V1, I8",6,to do,feat/V3-class-effects,pipeline/src/**/medsignal/advanced/classeffect/
 V4 Drug-pair interaction signals,E7 Evaluation and advanced analysis,"Pair counts from a self-join of case_drug restricted to formulary drugs, with minimum counts. Interaction ratio = pair PRR over the higher single-drug PRR. GraphFrames motif version for comparison.
 
 Done when: Top 50 pairs listed with counts; run time recorded.
 
-Depends on: S3, G2",A,"S3, G2",6,to do,feat/V4-interaction-signals,pipeline/src/**/medsignal/advanced/interactions/
+Depends on: S3, G2, G1",A,"S3, G2, G1",6,to do,feat/V4-interaction-signals,pipeline/src/**/medsignal/advanced/interactions/
 V5 Interaction validation,E7 Evaluation and advanced analysis,"Check top pairs against the drug interactions section of each drug's label, and against random pairs.
 
 Done when: Confirmation rate for top 50 against random pairs reported.
@@ -268,7 +268,7 @@ V8 Exposure weighting,E7 Evaluation and advanced analysis,"Reports per 100,000 P
 
 Done when: Signals page can sort by reporting rate.
 
-Depends on: I10, G3",A,"I10, G3",6,to do,enhc/V8-exposure-weighting,pipeline/src/**/medsignal/advanced/exposure/
+Depends on: I10, G3",A,"I10, G3",6,to do,enhc/V8-exposure-weighting,"pipeline/src/**/medsignal/advanced/exposure/, pipeline/src/**/medsignal/publish/exposure/, app/src/**/medsignal/api/exposure/"
 D1 One-page architecture note,E8 Delivery,"Data flow and ontology diagram, the four decisions that mattered, what was chosen not to do.
 
 Done when: One page, reviewed by both.

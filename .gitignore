@@ -16,11 +16,7 @@ derby.log
 checkpoint/
 
 # Data: downloaded and derived data is never committed
-data/raw/
-data/bronze/
-data/silver/
-data/gold/
-data/serving/
+data/*
 !data/reference/
 
 # Local
