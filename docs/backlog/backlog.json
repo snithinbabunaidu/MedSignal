@@ -1,0 +1,869 @@
+{
+  "owners": {
+    "Nithin": "Nithin Naidu: FAERS, identity, signals, backtest, models",
+    "Zenish": "Zenish: labels, recalls, changes, API and app",
+    "Both": "Nithin and Zenish together"
+  },
+  "epics": [
+    {
+      "id": "E0",
+      "name": "Foundation",
+      "phase": 0,
+      "goal": "A build both engineers can work in, with the two library risks settled."
+    },
+    {
+      "id": "E1",
+      "name": "Ingestion (bronze)",
+      "phase": 1,
+      "goal": "Every source landed as received, typed, with every rejected row counted."
+    },
+    {
+      "id": "E2",
+      "name": "Cleaning and identity (silver)",
+      "phase": 2,
+      "goal": "Deduplicated cases and one drug ID across all sources."
+    },
+    {
+      "id": "E3",
+      "name": "Signal statistics",
+      "phase": 3,
+      "goal": "Per-quarter counts and ranked candidate signals for every formulary drug."
+    },
+    {
+      "id": "E4",
+      "name": "Label reaction extraction",
+      "phase": 3,
+      "goal": "Labeled reactions with passages and offsets, scored on a gold set."
+    },
+    {
+      "id": "E5",
+      "name": "Incremental runs, changes, monitoring",
+      "phase": 4,
+      "goal": "Daily, weekly and quarterly runs that agree with a full rebuild, a change feed, and health checks."
+    },
+    {
+      "id": "E6",
+      "name": "Serving and application",
+      "phase": 5,
+      "goal": "The safety officer's five pages, with triage that survives a rebuild."
+    },
+    {
+      "id": "E7",
+      "name": "Evaluation and advanced analysis",
+      "phase": 6,
+      "goal": "Backtest against FDA history, class and interaction signals, ranking model, extra sources."
+    },
+    {
+      "id": "E8",
+      "name": "Delivery",
+      "phase": 7,
+      "goal": "Architecture note, optimization log, acceptance report and demo."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "F1",
+      "epic": "E0",
+      "owner": "Nithin",
+      "deps": [],
+      "title": "sbt multi-module build",
+      "detail": "Three modules: labels (Scala 3.9, XmlDoc core + json), pipeline (Scala 2.13, Spark 4.0.x provided, Delta Lake, TableParser 1.7.2 core + spark), app (Scala 3.9, http4s). JDK 21. No dependsOn between modules.",
+      "done": "sbt test passes on a clean checkout on both engineers' machines.",
+      "branch": "chore/F1-sbt-build",
+      "owns": "build.sbt, project/, empty module folders"
+    },
+    {
+      "id": "F2",
+      "epic": "E0",
+      "owner": "Zenish",
+      "deps": [
+        "F1"
+      ],
+      "title": "CI on GitHub Actions",
+      "detail": "Compile, test, scalafmt check and scoverage for all modules on every pull request. Protect main: pull request and green CI required.",
+      "done": "A pull request shows a green check; a failing test blocks merge.",
+      "branch": "chore/F2-ci",
+      "owns": ".github/workflows/, .scalafmt.conf"
+    },
+    {
+      "id": "F3",
+      "epic": "E0",
+      "owner": "Zenish",
+      "deps": [
+        "F1"
+      ],
+      "title": "Developer environment guide and config",
+      "detail": "docs/setup.md: JDK 21, sbt, WSL2 or Docker for Spark on Windows, data directory layout (data/raw, bronze, silver, gold; git-ignored). Typed config for paths and thresholds.",
+      "done": "The other engineer sets up from the guide alone.",
+      "branch": "chore/F3-setup-guide",
+      "owns": "docs/setup.md, pipeline/src/main/resources/application.conf"
+    },
+    {
+      "id": "F4",
+      "epic": "E0",
+      "owner": "Nithin",
+      "deps": [
+        "F1"
+      ],
+      "title": "Spike: TableParser inside Spark",
+      "detail": "Parse one FAERS quarter (DRUG file) with TableParser's row parser applied in a Dataset map, as in tableparser-spark's DatasetMapper. Check serialization, header-by-name across an old and a new quarter, and throughput against Spark's CSV reader.",
+      "done": "Decision record docs/decisions/F4-tableparser-in-spark.md says which parser handles bulk FAERS and why, with timings.",
+      "branch": "feat/F4-tableparser-spike",
+      "owns": "pipeline/src/**/medsignal/spike/tableparser/, docs/decisions/F4-tableparser-in-spark.md"
+    },
+    {
+      "id": "F5",
+      "epic": "E0",
+      "owner": "Zenish",
+      "deps": [
+        "F1"
+      ],
+      "title": "Spike: XmlDoc on SPL labels",
+      "detail": "Extract sections (LOINC code, title, text) from five real labels with derived Extractors, XmlStream and GenericElement. Check hl7 namespaces, nested sections, tables and lists in text.",
+      "done": "Decision record docs/decisions/F5-xmldoc-on-spl.md with the case classes that worked and the fallback used for mixed content.",
+      "branch": "feat/F5-xmldoc-spike",
+      "owns": "labels/src/**/medsignal/spike/, docs/decisions/F5-xmldoc-on-spl.md"
+    },
+    {
+      "id": "F6",
+      "epic": "E0",
+      "owner": "Both",
+      "deps": [
+        "F1",
+        "F7"
+      ],
+      "title": "Define the formulary",
+      "detail": "About 150 ingredients in five classes (SGLT2 and DPP-4 diabetes drugs, fluoroquinolones, sleep drugs, gabapentinoids, asthma and allergy) plus common hospital drugs. CSV: rxcui, ingredient, class, reason included. Also load the CSV into bronze.formulary.",
+      "done": "data/reference/formulary.csv reviewed by both; every row has a valid rxcui.",
+      "branch": "chore/F6-formulary",
+      "owns": "data/reference/formulary.csv, pipeline/src/**/medsignal/bronze/reference/formulary/"
+    },
+    {
+      "id": "F7",
+      "epic": "E0",
+      "owner": "Nithin",
+      "deps": [
+        "F1"
+      ],
+      "title": "Common pipeline library",
+      "detail": "Delta read/write helpers, run_manifest (watermarks, checksums), run_metrics writer, Reject type and rejects table, SparkSession factory for tests.",
+      "done": "Unit tests cover manifest and metrics round trips.",
+      "branch": "feat/F7-common-library",
+      "owns": "pipeline/src/**/medsignal/common/"
+    },
+    {
+      "id": "I1",
+      "epic": "E1",
+      "owner": "Nithin",
+      "deps": [
+        "F3"
+      ],
+      "title": "FAERS downloader",
+      "detail": "Download quarterly ASCII zips from 2014 Q3 to the latest quarter and the deleted-case lists; record checksum and size in the manifest; skip files already present.",
+      "done": "All quarters on disk; re-running downloads nothing.",
+      "branch": "feat/I1-faers-downloader",
+      "owns": "pipeline/src/**/medsignal/download/faers/"
+    },
+    {
+      "id": "I2",
+      "epic": "E1",
+      "owner": "Nithin",
+      "deps": [
+        "F4",
+        "F7",
+        "I1"
+      ],
+      "title": "FAERS bronze tables",
+      "detail": "Case classes and parsers for DEMO, DRUG, REAC, OUTC and INDI, plus the deleted-case lists (bronze.faers_deleted). Bronze Delta tables partitioned by quarter. Every line is loaded or written to rejects with file, line number and reason.",
+      "done": "Lines in = rows loaded + rows rejected for every file (criterion 1).",
+      "branch": "feat/I2-faers-bronze",
+      "owns": "pipeline/src/**/medsignal/bronze/faers/"
+    },
+    {
+      "id": "I3",
+      "epic": "E1",
+      "owner": "Nithin",
+      "deps": [
+        "F7",
+        "F6"
+      ],
+      "title": "RxNorm and RxClass bronze",
+      "detail": "Load RxNorm names (pipe-delimited RXNCONSO, prescribable subset) with TableParser. Pull class membership from RxClass for formulary ingredients. Also write bronze.rxnorm_ingredient_map (brand, salt and product concepts to ingredient). Also write gold.Drug (name, class, on-formulary flag).",
+      "done": "bronze.rxnorm_names and bronze.rxclass populated; counts recorded.",
+      "branch": "feat/I3-rxnorm-bronze",
+      "owns": "pipeline/src/**/medsignal/bronze/rxnorm/, pipeline/src/**/medsignal/gold/drug/"
+    },
+    {
+      "id": "I4",
+      "epic": "E1",
+      "owner": "Zenish",
+      "deps": [
+        "F6",
+        "F1"
+      ],
+      "title": "DailyMed downloader",
+      "detail": "For each formulary ingredient, list SPL setIds and fetch every available version (history) as XML. Record setId, version and checksum in the manifest.",
+      "done": "Label versions on disk for every formulary drug; count reported.",
+      "branch": "feat/I4-dailymed-downloader",
+      "owns": "labels/src/**/medsignal/download/"
+    },
+    {
+      "id": "I5",
+      "epic": "E1",
+      "owner": "Zenish",
+      "deps": [
+        "F5",
+        "I4"
+      ],
+      "title": "labels module: SPL to JSON Lines",
+      "detail": "XmlDoc extraction of label metadata and the four sections (boxed warning, warnings and precautions, adverse reactions, drug interactions) into LabelSection records. Write JSON Lines and the SparkSchema.ddl string. Extraction failures are written to a rejects file.",
+      "done": "Every downloaded label yields records or a reject; schema string checked in.",
+      "branch": "feat/I5-spl-to-jsonl",
+      "owns": "labels/src/**/medsignal/spl/"
+    },
+    {
+      "id": "I6",
+      "epic": "E1",
+      "owner": "Zenish",
+      "deps": [
+        "I5",
+        "F7"
+      ],
+      "title": "Label bronze table",
+      "detail": "Spark reads the JSON Lines with the generated DDL into bronze.label_section.",
+      "done": "Row count equals JSON line count; schema test passes.",
+      "branch": "feat/I6-label-bronze",
+      "owns": "pipeline/src/**/medsignal/bronze/labels/"
+    },
+    {
+      "id": "I7",
+      "epic": "E1",
+      "owner": "Zenish",
+      "deps": [
+        "F7"
+      ],
+      "title": "Recall ingestion",
+      "detail": "Download openFDA drug enforcement records (bulk file for history, API for updates). Explicit Spark schema; bronze.recall_raw.",
+      "done": "Record count matches the openFDA total for the date range.",
+      "branch": "feat/I7-recall-ingestion",
+      "owns": "pipeline/src/**/medsignal/bronze/recalls/"
+    },
+    {
+      "id": "I8",
+      "epic": "E1",
+      "owner": "Both",
+      "deps": [
+        "F6",
+        "F1",
+        "F7"
+      ],
+      "title": "FDA warning answer key",
+      "detail": "Curate about 20 Drug Safety Communications and label changes for formulary drugs: drug or class, reaction terms, date, source URL. Each row checked by the second engineer. Also load the CSV into bronze.fda_warning.",
+      "done": "data/reference/fda_warnings.csv with a source link on every row.",
+      "branch": "chore/I8-fda-warning-key",
+      "owns": "data/reference/fda_warnings.csv, pipeline/src/**/medsignal/bronze/reference/warnings/"
+    },
+    {
+      "id": "I9",
+      "epic": "E1",
+      "owner": "Zenish",
+      "deps": [
+        "F7",
+        "F6"
+      ],
+      "title": "ClinicalTrials.gov adverse events",
+      "detail": "Pull trial results with reported adverse events for formulary drugs from the v2 API into bronze.",
+      "done": "bronze.trial_adverse_event populated for formulary drugs.",
+      "branch": "feat/I9-trials-bronze",
+      "owns": "pipeline/src/**/medsignal/bronze/trials/"
+    },
+    {
+      "id": "I10",
+      "epic": "E1",
+      "owner": "Nithin",
+      "deps": [
+        "F7"
+      ],
+      "title": "Medicare Part D spending by drug",
+      "detail": "Load the yearly CSV (claims and beneficiaries by drug) with TableParser into bronze.",
+      "done": "bronze.partd_drug populated; years recorded.",
+      "branch": "feat/I10-partd-bronze",
+      "owns": "pipeline/src/**/medsignal/bronze/partd/"
+    },
+    {
+      "id": "S1",
+      "epic": "E2",
+      "owner": "Nithin",
+      "deps": [
+        "I2"
+      ],
+      "title": "Case deduplication",
+      "detail": "silver.case keeps the highest caseversion per caseid and drops FDA-deleted cases. Partial dates parsed to a quarter.",
+      "done": "One row per caseid; duplicate and deleted counts recorded.",
+      "branch": "feat/S1-case-dedup",
+      "owns": "pipeline/src/**/medsignal/silver/cases/"
+    },
+    {
+      "id": "S2",
+      "epic": "E2",
+      "owner": "Nithin",
+      "deps": [
+        "I2",
+        "I3"
+      ],
+      "title": "Drug identity resolver (drug_xref)",
+      "detail": "Resolve distinct name strings to an ingredient rxcui: override file, prod_ai column, exact normalized match, match after stripping dose and form. Store method and confidence. Incremental: only new strings are resolved. Combination products map to each ingredient.",
+      "done": "At least 95% of formulary-drug mentions resolved (criterion 2); unmatched strings listed by frequency.",
+      "branch": "feat/S2-drug-xref",
+      "owns": "pipeline/src/**/medsignal/identity/, data/reference/drug_overrides.csv"
+    },
+    {
+      "id": "S3",
+      "epic": "E2",
+      "owner": "Nithin",
+      "deps": [
+        "S1",
+        "S2"
+      ],
+      "title": "Case detail tables",
+      "detail": "silver.case_drug (suspect roles only, rxcui, one row per case and ingredient), case_reaction, case_outcome, case_indication.",
+      "done": "Primary keys unique; row counts recorded.",
+      "branch": "feat/S3-case-detail",
+      "owns": "pipeline/src/**/medsignal/silver/casedetail/"
+    },
+    {
+      "id": "S4",
+      "epic": "E2",
+      "owner": "Zenish",
+      "deps": [
+        "I6",
+        "S2",
+        "F6"
+      ],
+      "title": "Label versions and reference label",
+      "detail": "silver.label_version: one row per setId and version with rxcui and effective date. Reference-label rule: brand-name label where one exists, otherwise the most recent single-ingredient label. Also write gold.Label.",
+      "done": "Every formulary ingredient has exactly one current reference label or is listed as missing.",
+      "branch": "feat/S4-label-versions",
+      "owns": "pipeline/src/**/medsignal/silver/labels/, pipeline/src/**/medsignal/gold/label/"
+    },
+    {
+      "id": "S5",
+      "epic": "E2",
+      "owner": "Zenish",
+      "deps": [
+        "I7",
+        "S2",
+        "F6"
+      ],
+      "title": "Recall silver table",
+      "detail": "Normalized recall records; product text resolved through drug_xref; unresolved recalls kept with a null rxcui. Also write gold.Recall.",
+      "done": "Resolution rate reported; unresolved recalls visible.",
+      "branch": "feat/S5-recall-silver",
+      "owns": "pipeline/src/**/medsignal/silver/recalls/, pipeline/src/**/medsignal/gold/recall/"
+    },
+    {
+      "id": "S6",
+      "epic": "E2",
+      "owner": "Both",
+      "deps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "title": "Data issues log",
+      "detail": "For each issue in docs/data-issues.md, measure its size in the real data and record the handling or the decision to leave it.",
+      "done": "Every issue has a number beside it.",
+      "branch": "chore/S6-data-issues-log",
+      "owns": "docs/data-issues.md"
+    },
+    {
+      "id": "G1",
+      "epic": "E3",
+      "owner": "Nithin",
+      "deps": [
+        "S3",
+        "F6"
+      ],
+      "title": "AdverseEventStat counts",
+      "detail": "Distinct case counts per rxcui, reaction term and quarter, with serious and death counts and cumulative totals by window function. Background totals over all of FAERS.",
+      "done": "Totals reconcile with silver.case counts.",
+      "branch": "feat/G1-event-stat-counts",
+      "owns": "pipeline/src/**/medsignal/signals/counts/"
+    },
+    {
+      "id": "G2",
+      "epic": "E3",
+      "owner": "Nithin",
+      "deps": [
+        "F1"
+      ],
+      "title": "Statistics library",
+      "detail": "Pure functions: PRR, chi-square, reporting odds ratio with 95% interval, information component (shrinkage). Property tests and worked examples.",
+      "done": "Specs pass, including zero-cell and small-count cases.",
+      "branch": "feat/G2-stats-library",
+      "owns": "pipeline/src/**/medsignal/stats/"
+    },
+    {
+      "id": "G3",
+      "epic": "E3",
+      "owner": "Nithin",
+      "deps": [
+        "G1",
+        "G2"
+      ],
+      "title": "Signal table",
+      "detail": "2x2 counts from three aggregations and one join. Screen: PRR >= 2, chi-square >= 4, at least 3 cases. Score from the lower bound of the odds ratio, serious share and four-quarter growth. First-flagged quarter, indication flag, spike flag.",
+      "done": "SGLT2 inhibitors and ketoacidosis appear as a signal; score components shown per row.",
+      "branch": "feat/G3-signal-table",
+      "owns": "pipeline/src/**/medsignal/signals/signal/"
+    },
+    {
+      "id": "G4",
+      "epic": "E3",
+      "owner": "Nithin",
+      "deps": [
+        "G3"
+      ],
+      "title": "Shrinkage ranking comparison",
+      "detail": "Rank by the lower bound of the information component and compare the top 100 with the odds-ratio ranking.",
+      "done": "Short comparison written; one ranking chosen as default with the reason.",
+      "branch": "enhc/G4-shrinkage-ranking",
+      "owns": "pipeline/src/**/medsignal/signals/shrinkage/, docs/results/G4.md"
+    },
+    {
+      "id": "L1",
+      "epic": "E4",
+      "owner": "Zenish",
+      "deps": [
+        "S4"
+      ],
+      "title": "Section selection and sentence splitting",
+      "detail": "Select sections by LOINC code; split into sentences keeping character offsets into the section text.",
+      "done": "Offsets reproduce the exact sentence from the stored text in tests.",
+      "branch": "feat/L1-sentence-splitter",
+      "owns": "pipeline/src/**/medsignal/labeltext/sentences/"
+    },
+    {
+      "id": "L2",
+      "epic": "E4",
+      "owner": "Zenish",
+      "deps": [
+        "S3"
+      ],
+      "title": "Reaction dictionary and synonyms",
+      "detail": "Vocabulary = distinct FAERS reaction terms. Synonym file for lay wording in the formulary's classes. Normalization of case, plurals and word order.",
+      "done": "Dictionary versioned; synonym file reviewed by both.",
+      "branch": "feat/L2-reaction-dictionary",
+      "owns": "pipeline/src/**/medsignal/labeltext/dictionary/, data/reference/reaction_synonyms.csv"
+    },
+    {
+      "id": "L3",
+      "epic": "E4",
+      "owner": "Zenish",
+      "deps": [
+        "L1",
+        "L2"
+      ],
+      "title": "Dictionary matcher",
+      "detail": "Token trie broadcast to executors; typed mapPartitions over sentences; longest match wins.",
+      "done": "Unit tests on hand-made sentences; runs over all label versions.",
+      "branch": "feat/L3-dictionary-matcher",
+      "owns": "pipeline/src/**/medsignal/labeltext/matcher/"
+    },
+    {
+      "id": "L4",
+      "epic": "E4",
+      "owner": "Zenish",
+      "deps": [
+        "L3"
+      ],
+      "title": "Negation rules",
+      "detail": "Sentence-window rules (no cases of, was not observed, not associated with, and scope terminators such as but, however).",
+      "done": "At least 90% of negated mentions in the gold set handled correctly.",
+      "branch": "feat/L4-negation-rules",
+      "owns": "pipeline/src/**/medsignal/labeltext/negation/"
+    },
+    {
+      "id": "L5",
+      "epic": "E4",
+      "owner": "Zenish",
+      "deps": [
+        "L4",
+        "G3"
+      ],
+      "title": "LabeledReaction table and labeled status",
+      "detail": "Gold table keyed by setId, version, term and extractor version, with passage and offsets. Join to Signal: labeled, unlabeled, or negated-only, with the deciding passage.",
+      "done": "Every signal has a labeled status and a passage or the list of sections searched (criterion 6).",
+      "branch": "feat/L5-labeled-reaction",
+      "owns": "pipeline/src/**/medsignal/labeltext/labeled/"
+    },
+    {
+      "id": "L6",
+      "epic": "E4",
+      "owner": "Both",
+      "deps": [
+        "S4"
+      ],
+      "title": "Gold set of 50 labels",
+      "detail": "Each engineer annotates the labeled reactions in the adverse reactions and boxed warning sections of 25 labels, plus 10 shared labels to measure agreement.",
+      "done": "Gold set checked in; agreement on the shared labels reported.",
+      "branch": "chore/L6-gold-set",
+      "owns": "data/reference/gold_labels/ (one file per label)"
+    },
+    {
+      "id": "L7",
+      "epic": "E4",
+      "owner": "Zenish",
+      "deps": [
+        "L5",
+        "L6"
+      ],
+      "title": "Extraction evaluator and drift report",
+      "detail": "Precision, recall and negation accuracy against the gold set, recomputed on every extractor version. Drift report: reactions whose status flipped between label versions or extractor versions.",
+      "done": "Scores written to a table and shown on the health page (criterion 5).",
+      "branch": "feat/L7-extraction-evaluator",
+      "owns": "pipeline/src/**/medsignal/labeltext/eval/"
+    },
+    {
+      "id": "C1",
+      "epic": "E5",
+      "owner": "Nithin",
+      "deps": [
+        "F7"
+      ],
+      "title": "Run orchestrator",
+      "detail": "Command line entry point: run daily, weekly, quarterly or full. Reads watermarks, runs only the stages that have new input, writes run_metrics.",
+      "done": "A run with no new data does no work and says so.",
+      "branch": "feat/C1-run-orchestrator",
+      "owns": "pipeline/src/**/medsignal/run/"
+    },
+    {
+      "id": "C2",
+      "epic": "E5",
+      "owner": "Nithin",
+      "deps": [
+        "S1",
+        "G3",
+        "C1"
+      ],
+      "title": "FAERS incremental quarter load",
+      "detail": "Parse a new quarter into its partition, MERGE into silver.case by caseid when the version is newer, rebuild gold aggregates.",
+      "done": "Gold after loading quarters one by one equals gold after a full rebuild, row for row (criterion 4).",
+      "branch": "feat/C2-faers-incremental",
+      "owns": "pipeline/src/**/medsignal/incremental/faers/"
+    },
+    {
+      "id": "C3",
+      "epic": "E5",
+      "owner": "Zenish",
+      "deps": [
+        "S4",
+        "S5",
+        "L5",
+        "C1"
+      ],
+      "title": "Label and recall incremental runs",
+      "detail": "Labels: only new setId and version pairs are parsed and extracted. Recalls: records after the watermark plus all open recalls, merged by recall_number.",
+      "done": "A new label version triggers extraction for that version only; a status change on a recall is captured.",
+      "branch": "feat/C3-label-recall-incremental",
+      "owns": "pipeline/src/**/medsignal/incremental/labels/, pipeline/src/**/medsignal/incremental/recalls/, scripts/run-labels.sh"
+    },
+    {
+      "id": "C4",
+      "epic": "E5",
+      "owner": "Zenish",
+      "deps": [
+        "G3",
+        "L5",
+        "S5"
+      ],
+      "title": "ChangeEvent builder",
+      "detail": "Compare Signal, Label and Recall with the previous run and append events: new signal, signal now labeled, label updated, recall opened, recall closed.",
+      "done": "A replayed day with a known new recall and label update yields exactly those events (criterion 7).",
+      "branch": "feat/C4-change-events",
+      "owns": "pipeline/src/**/medsignal/changes/"
+    },
+    {
+      "id": "C5",
+      "epic": "E5",
+      "owner": "Nithin",
+      "deps": [
+        "F7"
+      ],
+      "title": "Quality checks",
+      "detail": "After each stage: schema matches the case class, row count within tolerance of the last run, reject rate under threshold, freshness within cadence, primary keys unique. A failed check fails the run with a message.",
+      "done": "Each check has a test that makes it fail.",
+      "branch": "feat/C5-quality-checks",
+      "owns": "pipeline/src/**/medsignal/quality/"
+    },
+    {
+      "id": "C6",
+      "epic": "E5",
+      "owner": "Nithin",
+      "deps": [
+        "C2"
+      ],
+      "title": "Optimization log",
+      "detail": "Pipeline: FAERS raw text to AdverseEventStat. Baseline, then columnar bronze with column pruning, broadcast joins, incremental against full. Record wall time, shuffle bytes and peak memory, and what did not help.",
+      "done": "docs/optimization-log.md with before and after numbers from the Spark UI.",
+      "branch": "chore/C6-optimization-log",
+      "owns": "docs/optimization-log.md"
+    },
+    {
+      "id": "A1",
+      "epic": "E6",
+      "owner": "Nithin",
+      "deps": [
+        "G3",
+        "L5",
+        "C4"
+      ],
+      "title": "Publish job",
+      "detail": "Copy formulary-scoped gold tables to the serving database over JDBC in one transaction (PostgreSQL; H2 in tests).",
+      "done": "Serving tables match gold counts; app stays readable during publish.",
+      "branch": "feat/A1-publish-job",
+      "owns": "pipeline/src/**/medsignal/publish/"
+    },
+    {
+      "id": "A2",
+      "epic": "E6",
+      "owner": "Zenish",
+      "deps": [
+        "A1"
+      ],
+      "title": "http4s API",
+      "detail": "Endpoints: changes since last run, ranked signals with filters, drug drill-down, recalls, pipeline health, triage POST. JSON with circe.",
+      "done": "Endpoint specs pass against a seeded database.",
+      "branch": "feat/A2-http-api",
+      "owns": "app/src/**/medsignal/api/"
+    },
+    {
+      "id": "A3",
+      "epic": "E6",
+      "owner": "Zenish",
+      "deps": [
+        "A2"
+      ],
+      "title": "Web pages",
+      "detail": "Today, Signals, Drug drill-down (counts by quarter beside the highlighted label passage), Recalls, Pipeline health.",
+      "done": "The safety officer's three questions are each answered within two clicks.",
+      "branch": "feat/A3-web-pages",
+      "owns": "app/src/main/resources/web/"
+    },
+    {
+      "id": "A4",
+      "epic": "E6",
+      "owner": "Nithin",
+      "deps": [
+        "A2"
+      ],
+      "title": "Triage write-back",
+      "detail": "Triage events inserted by the API are merged into gold TriageDecision at the start of the next run and joined to Signal.",
+      "done": "A dismissed signal stays dismissed after a full rebuild.",
+      "branch": "feat/A4-triage-writeback",
+      "owns": "pipeline/src/**/medsignal/triage/"
+    },
+    {
+      "id": "A5",
+      "epic": "E6",
+      "owner": "Zenish",
+      "deps": [
+        "A2"
+      ],
+      "title": "API latency measurement",
+      "detail": "Measure page requests against the full formulary.",
+      "done": "95% of requests under 1 second (criterion 8), or the number reported.",
+      "branch": "chore/A5-api-latency",
+      "owns": "app/src/**/medsignal/perf/ (test), docs/results/A5.md"
+    },
+    {
+      "id": "A6",
+      "epic": "E6",
+      "owner": "Nithin",
+      "deps": [
+        "A1"
+      ],
+      "title": "Docker Compose deployment",
+      "detail": "PostgreSQL, the app, and a pipeline image; one command to start the demo.",
+      "done": "docker compose up serves the app from a clean machine with sample data.",
+      "branch": "chore/A6-docker-compose",
+      "owns": "docker/, docker-compose.yml"
+    },
+    {
+      "id": "V1",
+      "epic": "E7",
+      "owner": "Nithin",
+      "deps": [
+        "G3",
+        "L5",
+        "S4"
+      ],
+      "title": "As-of-quarter signal rebuild",
+      "detail": "Rebuild signals for each quarter using only FAERS partitions and label versions available at that time.",
+      "done": "Signal history table: one row per rxcui, term and as-of quarter.",
+      "branch": "feat/V1-asof-signals",
+      "owns": "pipeline/src/**/medsignal/backtest/asof/"
+    },
+    {
+      "id": "V2",
+      "epic": "E7",
+      "owner": "Nithin",
+      "deps": [
+        "V1",
+        "I8",
+        "L5"
+      ],
+      "title": "Backtest scoring",
+      "detail": "For each known FDA warning, the first quarter MedSignal flagged it as an unlabeled signal; share flagged before the FDA and median lead time.",
+      "done": "Backtest table and page; criterion 10 measured.",
+      "branch": "feat/V2-backtest-scoring",
+      "owns": "pipeline/src/**/medsignal/backtest/scoring/, pipeline/src/**/medsignal/publish/backtest/, app/src/**/medsignal/api/backtest/, app/src/main/resources/web/backtest.html"
+    },
+    {
+      "id": "V3",
+      "epic": "E7",
+      "owner": "Nithin",
+      "deps": [
+        "G3",
+        "L5",
+        "V1",
+        "I8"
+      ],
+      "title": "Class-effect signals",
+      "detail": "The same unlabeled reaction across several drugs of one class, with pooled counts.",
+      "done": "Known class warnings (for example SGLT2 inhibitors and Fournier's gangrene) appear.",
+      "branch": "feat/V3-class-effects",
+      "owns": "pipeline/src/**/medsignal/advanced/classeffect/"
+    },
+    {
+      "id": "V4",
+      "epic": "E7",
+      "owner": "Nithin",
+      "deps": [
+        "S3",
+        "G2",
+        "G1"
+      ],
+      "title": "Drug-pair interaction signals",
+      "detail": "Pair counts from a self-join of case_drug restricted to formulary drugs, with minimum counts. Interaction ratio = pair PRR over the higher single-drug PRR. GraphFrames motif version for comparison.",
+      "done": "Top 50 pairs listed with counts; run time recorded.",
+      "branch": "feat/V4-interaction-signals",
+      "owns": "pipeline/src/**/medsignal/advanced/interactions/"
+    },
+    {
+      "id": "V5",
+      "epic": "E7",
+      "owner": "Zenish",
+      "deps": [
+        "V4",
+        "L5"
+      ],
+      "title": "Interaction validation",
+      "detail": "Check top pairs against the drug interactions section of each drug's label, and against random pairs.",
+      "done": "Confirmation rate for top 50 against random pairs reported.",
+      "branch": "feat/V5-interaction-validation",
+      "owns": "pipeline/src/**/medsignal/advanced/interactioncheck/"
+    },
+    {
+      "id": "V6",
+      "epic": "E7",
+      "owner": "Nithin",
+      "deps": [
+        "V2",
+        "V3",
+        "V4"
+      ],
+      "title": "MLlib ranking model",
+      "detail": "Predict which unlabeled signals become label changes. GBTClassifier and LogisticRegression against the transparent score. Time split; instance weights; PR-AUC.",
+      "done": "PR-AUC of each model and the baseline on the held-out years reported.",
+      "branch": "feat/V6-ranking-model",
+      "owns": "pipeline/src/**/medsignal/advanced/ranking/"
+    },
+    {
+      "id": "V7",
+      "epic": "E7",
+      "owner": "Zenish",
+      "deps": [
+        "I9",
+        "A2"
+      ],
+      "title": "Trial evidence on the drill-down",
+      "detail": "Show whether the reaction was reported in trial results for the drug, as a second opinion.",
+      "done": "Drill-down shows trial counts with a link to the trial.",
+      "branch": "enhc/V7-trial-evidence",
+      "owns": "pipeline/src/**/medsignal/publish/trials/, app/src/**/medsignal/api/trials/"
+    },
+    {
+      "id": "V8",
+      "epic": "E7",
+      "owner": "Nithin",
+      "deps": [
+        "I10",
+        "G3"
+      ],
+      "title": "Exposure weighting",
+      "detail": "Reports per 100,000 Part D claims beside each signal.",
+      "done": "Signals page can sort by reporting rate.",
+      "branch": "enhc/V8-exposure-weighting",
+      "owns": "pipeline/src/**/medsignal/advanced/exposure/, pipeline/src/**/medsignal/publish/exposure/, app/src/**/medsignal/api/exposure/"
+    },
+    {
+      "id": "D1",
+      "epic": "E8",
+      "owner": "Both",
+      "deps": [
+        "A3"
+      ],
+      "title": "One-page architecture note",
+      "detail": "Data flow and ontology diagram, the four decisions that mattered, what was chosen not to do.",
+      "done": "One page, reviewed by both.",
+      "branch": "chore/D1-architecture-note",
+      "owns": "docs/architecture-note.md"
+    },
+    {
+      "id": "D2",
+      "epic": "E8",
+      "owner": "Both",
+      "deps": [
+        "A5",
+        "C6",
+        "L7",
+        "V2"
+      ],
+      "title": "Acceptance report",
+      "detail": "Every criterion in docs/acceptance-criteria.md with its measured value and how it was measured.",
+      "done": "Report checked in; no criterion left unmeasured.",
+      "branch": "chore/D2-acceptance-report",
+      "owns": "docs/acceptance-report.md"
+    },
+    {
+      "id": "D3",
+      "epic": "E8",
+      "owner": "Both",
+      "deps": [
+        "D1",
+        "D2"
+      ],
+      "title": "Demo script and rehearsal",
+      "detail": "Twenty minutes: the app as the safety officer uses it, then under the hood. Questions each engineer should expect.",
+      "done": "Rehearsed once end to end from a clean checkout.",
+      "branch": "chore/D3-demo-script",
+      "owns": "docs/demo-script.md"
+    },
+    {
+      "id": "D4",
+      "epic": "E8",
+      "owner": "Zenish",
+      "deps": [
+        "A6"
+      ],
+      "title": "README and runbook",
+      "detail": "How to run each cadence, how to add a source, what to do when a check fails.",
+      "done": "A new engineer runs the daily job from the README.",
+      "branch": "chore/D4-readme-runbook",
+      "owns": "README.md, docs/runbook.md"
+    }
+  ]
+}
