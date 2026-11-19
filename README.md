@@ -61,7 +61,7 @@ Planning is complete; no code yet. The first tasks are the sbt build (F1) and tw
 | [Data issues](docs/data-issues.md) | Known problems in the data and how each is handled |
 | [Acceptance criteria](docs/acceptance-criteria.md) | The numbers we will measure and report |
 | [Backlog](docs/backlog/backlog.md) | All tasks with owner, dependencies, branch, owned files and exit condition |
-| [Branches and commits](docs/branching.md) | One branch per task, file ownership, commit message format |
+| [Branches and commits](docs/branching.md) | The eight branches, file ownership, commit message format |
 | [Contributing](CONTRIBUTING.md) | Branches, pull requests, tests, definition of done |
 
 ## Team

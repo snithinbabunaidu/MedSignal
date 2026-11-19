@@ -1,6 +1,6 @@
 # Contracts
 
-Names and shapes that every task must agree on. If a task needs to change something here, that is its own `[Chore]` pull request, merged first.
+Names and shapes that every task must agree on. If a task needs to change something here, that is its own `[Chore]` commit, agreed with the other engineer first.
 
 Status: proposed. Spikes F4 and F5 may adjust the parsing parts; nothing here has been compiled yet.
 

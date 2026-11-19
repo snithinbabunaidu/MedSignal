@@ -7,10 +7,10 @@ Two engineers work in this repository. These rules keep the work reviewable and 
 The full rules, including which files each task owns, are in [docs/branching.md](docs/branching.md). In short:
 
 - `main` is protected. Changes arrive by pull request with green CI and one approval from the other engineer.
-- One backlog task, one branch, one pull request. The branch name is given in the backlog: `feat/S2-drug-xref`, `chore/F1-sbt-build`.
-- A branch changes only the files its task owns, so branches merge without conflicts.
+- Eight branches for the whole project, one pull request each. A backlog task is one commit on its branch; the backlog says which branch.
+- A commit changes only the files its task owns, so two people can share a branch without conflicts.
 - The pull request description states the task ID and shows its "done when" condition being met (a test name, a count, a screenshot).
-- Squash-merge, then delete the branch.
+- Merge with a merge commit (no squash), then delete the branch.
 
 ## Commit messages
 

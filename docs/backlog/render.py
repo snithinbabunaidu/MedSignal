@@ -19,6 +19,11 @@ for t in tasks:
 md = ["# Backlog", "",
       "Generated from `backlog.json` by `render.py`. Order within a phase follows the dependencies, not dates.", "",
       "Owners: " + "; ".join(f"**{k}** = {v}" for k, v in data["owners"].items()) + ".", ""]
+md += ["## Branches", "", "Eight branches, one pull request each. Rules are in [../branching.md](../branching.md).", "",
+       "| # | Branch | Who | Tasks | Start when | Waits for | Pull request title |", "|---|---|---|---|---|---|---|"]
+for n, br in enumerate(data["branches"], 1):
+    md.append(f"| {n} | `{br['name']}` | {br['who']} | {', '.join(br['tasks'])} | {br['startWhen']} | {br['waitsFor']} | `{br['prTitle']}` |")
+md.append("")
 for e in data["epics"]:
     md += [f"## {e['id']} {e['name']} (phase {e['phase']})", "", e["goal"], "",
            "| ID | Task | Owner | Depends on | Branch | Owns | Done when |", "|---|---|---|---|---|---|---|"]
