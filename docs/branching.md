@@ -34,7 +34,7 @@ Conflicts happen when two branches edit the same file. So every task has an "Own
 
 After F1 merges, these groups have no shared files and no dependency on each other:
 
-| Stage | Engineer A | Engineer B |
+| Stage | Nithin | Zenish |
 |---|---|---|
 | Foundation | F4, F7, G2 | F2, F3, F5 |
 | Ingestion | I1, I2, I3, I10 | I4, I5, I6, I7, I9 |

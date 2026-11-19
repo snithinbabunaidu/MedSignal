@@ -66,4 +66,4 @@ Planning is complete; no code yet. The first tasks are the sbt build (F1) and tw
 
 ## Team
 
-Two engineers. Engineer A (Nithin Naidu) owns FAERS, drug identity, signals, the backtest and the models. Engineer B owns labels, recalls, the change feed, the API and the web pages. Build, the formulary, the gold set and delivery are shared.
+Two engineers. Nithin Naidu owns FAERS, drug identity, signals, the backtest and the models. Zenish owns labels, recalls, the change feed, the API and the web pages. Build, the formulary, the gold set and delivery are shared.

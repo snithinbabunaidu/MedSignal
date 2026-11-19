@@ -42,18 +42,18 @@ The plan is ordered by dependency, not by date. A phase starts when the phase be
 | 6 | E7 Evaluation and advanced analysis | Backtest scored; class, interaction and model results reported |
 | 7 | E8 Delivery | Architecture note, optimization log, acceptance report, rehearsed demo |
 
-Phase 3 is where the two engineers work fully in parallel: signals (A) and label extraction (B) meet at the `Signal.labeledStatus` join.
+Phase 3 is where the two engineers work fully in parallel: signals (Nithin) and label extraction (Zenish) meet at the `Signal.labeledStatus` join.
 
 ## Who does what
 
 | Area | Owner |
 |---|---|
-| FAERS ingestion, deduplication, drug identity | Engineer A |
-| Signal statistics, backtest, class and interaction signals, ranking model | Engineer A |
-| Run orchestrator, quality checks, optimization log, publish job, deployment | Engineer A |
-| Label ingestion (XmlDoc), label extraction, evaluator and drift report | Engineer B |
-| Recalls, change feed | Engineer B |
-| API, web pages, CI, setup guide | Engineer B |
+| FAERS ingestion, deduplication, drug identity | Nithin |
+| Signal statistics, backtest, class and interaction signals, ranking model | Nithin |
+| Run orchestrator, quality checks, optimization log, publish job, deployment | Nithin |
+| Label ingestion (XmlDoc), label extraction, evaluator and drift report | Zenish |
+| Recalls, change feed | Zenish |
+| API, web pages, CI, setup guide | Zenish |
 | Formulary, FDA warning answer key, gold set, data issues log, delivery | Both |
 
 Each engineer reviews the other's pull requests, so both can explain every part in the demo.

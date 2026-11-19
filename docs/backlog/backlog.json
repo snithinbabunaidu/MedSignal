@@ -1,8 +1,8 @@
 {
   "owners": {
-    "A": "Engineer A (Nithin): FAERS, identity, signals, backtest, models",
-    "B": "Engineer B: labels, recalls, changes, API and app",
-    "Both": "Both engineers"
+    "Nithin": "Nithin Naidu: FAERS, identity, signals, backtest, models",
+    "Zenish": "Zenish: labels, recalls, changes, API and app",
+    "Both": "Nithin and Zenish together"
   },
   "epics": [
     {
@@ -64,7 +64,7 @@
     {
       "id": "F1",
       "epic": "E0",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [],
       "title": "sbt multi-module build",
       "detail": "Three modules: labels (Scala 3.9, XmlDoc core + json), pipeline (Scala 2.13, Spark 4.0.x provided, Delta Lake, TableParser 1.7.2 core + spark), app (Scala 3.9, http4s). JDK 21. No dependsOn between modules.",
@@ -75,7 +75,7 @@
     {
       "id": "F2",
       "epic": "E0",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "F1"
       ],
@@ -88,7 +88,7 @@
     {
       "id": "F3",
       "epic": "E0",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "F1"
       ],
@@ -101,7 +101,7 @@
     {
       "id": "F4",
       "epic": "E0",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "F1"
       ],
@@ -114,7 +114,7 @@
     {
       "id": "F5",
       "epic": "E0",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "F1"
       ],
@@ -141,7 +141,7 @@
     {
       "id": "F7",
       "epic": "E0",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "F1"
       ],
@@ -154,7 +154,7 @@
     {
       "id": "I1",
       "epic": "E1",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "F3"
       ],
@@ -167,7 +167,7 @@
     {
       "id": "I2",
       "epic": "E1",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "F4",
         "F7",
@@ -182,7 +182,7 @@
     {
       "id": "I3",
       "epic": "E1",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "F7",
         "F6"
@@ -196,7 +196,7 @@
     {
       "id": "I4",
       "epic": "E1",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "F6",
         "F1"
@@ -210,7 +210,7 @@
     {
       "id": "I5",
       "epic": "E1",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "F5",
         "I4"
@@ -224,7 +224,7 @@
     {
       "id": "I6",
       "epic": "E1",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "I5",
         "F7"
@@ -238,7 +238,7 @@
     {
       "id": "I7",
       "epic": "E1",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "F7"
       ],
@@ -266,7 +266,7 @@
     {
       "id": "I9",
       "epic": "E1",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "F7",
         "F6"
@@ -280,7 +280,7 @@
     {
       "id": "I10",
       "epic": "E1",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "F7"
       ],
@@ -293,7 +293,7 @@
     {
       "id": "S1",
       "epic": "E2",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "I2"
       ],
@@ -306,7 +306,7 @@
     {
       "id": "S2",
       "epic": "E2",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "I2",
         "I3"
@@ -320,7 +320,7 @@
     {
       "id": "S3",
       "epic": "E2",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "S1",
         "S2"
@@ -334,7 +334,7 @@
     {
       "id": "S4",
       "epic": "E2",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "I6",
         "S2",
@@ -349,7 +349,7 @@
     {
       "id": "S5",
       "epic": "E2",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "I7",
         "S2",
@@ -381,7 +381,7 @@
     {
       "id": "G1",
       "epic": "E3",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "S3",
         "F6"
@@ -395,7 +395,7 @@
     {
       "id": "G2",
       "epic": "E3",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "F1"
       ],
@@ -408,7 +408,7 @@
     {
       "id": "G3",
       "epic": "E3",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "G1",
         "G2"
@@ -422,7 +422,7 @@
     {
       "id": "G4",
       "epic": "E3",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "G3"
       ],
@@ -435,7 +435,7 @@
     {
       "id": "L1",
       "epic": "E4",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "S4"
       ],
@@ -448,7 +448,7 @@
     {
       "id": "L2",
       "epic": "E4",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "S3"
       ],
@@ -461,7 +461,7 @@
     {
       "id": "L3",
       "epic": "E4",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "L1",
         "L2"
@@ -475,7 +475,7 @@
     {
       "id": "L4",
       "epic": "E4",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "L3"
       ],
@@ -488,7 +488,7 @@
     {
       "id": "L5",
       "epic": "E4",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "L4",
         "G3"
@@ -515,7 +515,7 @@
     {
       "id": "L7",
       "epic": "E4",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "L5",
         "L6"
@@ -529,7 +529,7 @@
     {
       "id": "C1",
       "epic": "E5",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "F7"
       ],
@@ -542,7 +542,7 @@
     {
       "id": "C2",
       "epic": "E5",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "S1",
         "G3",
@@ -557,7 +557,7 @@
     {
       "id": "C3",
       "epic": "E5",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "S4",
         "S5",
@@ -573,7 +573,7 @@
     {
       "id": "C4",
       "epic": "E5",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "G3",
         "L5",
@@ -588,7 +588,7 @@
     {
       "id": "C5",
       "epic": "E5",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "F7"
       ],
@@ -601,7 +601,7 @@
     {
       "id": "C6",
       "epic": "E5",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "C2"
       ],
@@ -614,7 +614,7 @@
     {
       "id": "A1",
       "epic": "E6",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "G3",
         "L5",
@@ -629,7 +629,7 @@
     {
       "id": "A2",
       "epic": "E6",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "A1"
       ],
@@ -642,7 +642,7 @@
     {
       "id": "A3",
       "epic": "E6",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "A2"
       ],
@@ -655,7 +655,7 @@
     {
       "id": "A4",
       "epic": "E6",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "A2"
       ],
@@ -668,7 +668,7 @@
     {
       "id": "A5",
       "epic": "E6",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "A2"
       ],
@@ -681,7 +681,7 @@
     {
       "id": "A6",
       "epic": "E6",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "A1"
       ],
@@ -694,7 +694,7 @@
     {
       "id": "V1",
       "epic": "E7",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "G3",
         "L5",
@@ -709,7 +709,7 @@
     {
       "id": "V2",
       "epic": "E7",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "V1",
         "I8",
@@ -724,7 +724,7 @@
     {
       "id": "V3",
       "epic": "E7",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "G3",
         "L5",
@@ -740,7 +740,7 @@
     {
       "id": "V4",
       "epic": "E7",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "S3",
         "G2",
@@ -755,7 +755,7 @@
     {
       "id": "V5",
       "epic": "E7",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "V4",
         "L5"
@@ -769,7 +769,7 @@
     {
       "id": "V6",
       "epic": "E7",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "V2",
         "V3",
@@ -784,7 +784,7 @@
     {
       "id": "V7",
       "epic": "E7",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "I9",
         "A2"
@@ -798,7 +798,7 @@
     {
       "id": "V8",
       "epic": "E7",
-      "owner": "A",
+      "owner": "Nithin",
       "deps": [
         "I10",
         "G3"
@@ -855,7 +855,7 @@
     {
       "id": "D4",
       "epic": "E8",
-      "owner": "B",
+      "owner": "Zenish",
       "deps": [
         "A6"
       ],
